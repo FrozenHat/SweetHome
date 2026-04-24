@@ -6,6 +6,14 @@ class ParallaxEffect {
     this.layers = layers;
     this.useGyro = false;
     this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // Для сглаживания скачков
+    this.lastGamma = 0;
+    this.lastBeta = 0;
+    this.smoothGamma = 0;
+    this.smoothBeta = 0;
+    this.isFirstGyroEvent = true;
+    
     this.init();
   }
 
@@ -40,7 +48,7 @@ class ParallaxEffect {
   
   createGyroButton() {
     const button = document.createElement('button');
-    button.textContent = 'Активировать параллакс (гироскоп)';
+    button.textContent = '🎯 Активировать параллакс (гироскоп)';
     button.style.cssText = `
       position: fixed;
       bottom: 20px;
@@ -48,7 +56,7 @@ class ParallaxEffect {
       transform: translateX(-50%);
       z-index: 10000;
       padding: 12px 24px;
-      
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
       border-radius: 50px;
@@ -102,24 +110,72 @@ class ParallaxEffect {
   }
   
   initMouseAndTouch() {
-    // Подписываемся на mouse move и touch move
     window.addEventListener('mousemove', this.handleMove);
     window.addEventListener('touchmove', this.handleMove);
     window.addEventListener('touchstart', this.handleMove);
+  }
+  
+  // Сглаживание значений для устранения скачков
+  smoothValue(current, last, smoothing = 0.3) {
+    return last + (current - last) * smoothing;
+  }
+  
+  // Фильтрация резких скачков (более 30 градусов за раз)
+  filterJump(newValue, lastValue, maxJump = 30) {
+    let diff = newValue - lastValue;
+    if (Math.abs(diff) > maxJump) {
+      return lastValue + Math.sign(diff) * maxJump;
+    }
+    return newValue;
   }
   
   handleOrientation(e) {
     if (!this.useGyro) return;
     
     // Получаем данные с гироскопа
-    // gamma: наклон влево-вправо (-90 до 90)
-    // beta: наклон вперед-назад (-180 до 180)
-    let gamma = e.gamma || 0;
-    let beta = e.beta || 0;
+    let gamma = e.gamma || 0;  // Наклон влево-вправо
+    let beta = e.beta || 0;     // Наклон вперед-назад
     
-    // Нормализуем от -1 до 1
-    const normalizedX = Math.max(-1, Math.min(1, gamma / 45));
-    const normalizedY = Math.max(-1, Math.min(1, beta / 45));
+    // Исправляем проблему с переходом через 0 на iPhone
+    // На iPhone beta может резко прыгать с 0 до 180
+    if (beta > 90) beta = 180 - beta;
+    if (beta < -90) beta = -180 - beta;
+    
+    // Для первого события просто запоминаем значения
+    if (this.isFirstGyroEvent) {
+      this.lastGamma = gamma;
+      this.lastBeta = beta;
+      this.smoothGamma = gamma;
+      this.smoothBeta = beta;
+      this.isFirstGyroEvent = false;
+      return;
+    }
+    
+    // Фильтруем резкие скачки
+    gamma = this.filterJump(gamma, this.lastGamma, 25);
+    beta = this.filterJump(beta, this.lastBeta, 25);
+    
+    // Сглаживаем значения для плавности
+    this.smoothGamma = this.smoothValue(gamma, this.smoothGamma, 0.15);
+    this.smoothBeta = this.smoothValue(beta, this.smoothBeta, 0.15);
+    
+    // Запоминаем последние значения
+    this.lastGamma = gamma;
+    this.lastBeta = beta;
+    
+    // Ограничиваем диапазон для лучшего контроля
+    const maxAngle = 35; // Максимальный угол для полного смещения
+    let normalizedX = this.smoothGamma / maxAngle;
+    let normalizedY = this.smoothBeta / maxAngle;
+    
+    // Ограничиваем от -1 до 1
+    normalizedX = Math.max(-1, Math.min(1, normalizedX));
+    normalizedY = Math.max(-1, Math.min(1, normalizedY));
+    
+    // Добавляем мертвую зону (небольшие наклоны игнорируем)
+    const deadZone = 0.05;
+    if (Math.abs(normalizedX) < deadZone) normalizedX = 0;
+    if (Math.abs(normalizedY) < deadZone) normalizedY = 0;
     
     // Применяем смещение для каждого слоя
     this.layers.forEach(layer => {
@@ -128,8 +184,21 @@ class ParallaxEffect {
       
       const speed = layer.speed;
       const maxOffset = 250; // Максимальное смещение для гироскопа
-      const offsetX = normalizedX * maxOffset * speed;
-      const offsetY = normalizedY * maxOffset * speed;
+      
+      // Используем нелинейную интерполяцию для более плавного движения
+      let offsetX = normalizedX * maxOffset * speed;
+      let offsetY = normalizedY * maxOffset * speed;
+      
+      // Для ближних слоев добавляем небольшую задержку
+      if (speed > 0.2) {
+        offsetX = this.smoothValue(offsetX, this.lastOffsetX?.[layer.selector] || 0, 0.2);
+        offsetY = this.smoothValue(offsetY, this.lastOffsetY?.[layer.selector] || 0, 0.2);
+        
+        if (!this.lastOffsetX) this.lastOffsetX = {};
+        if (!this.lastOffsetY) this.lastOffsetY = {};
+        this.lastOffsetX[layer.selector] = offsetX;
+        this.lastOffsetY[layer.selector] = offsetY;
+      }
       
       // Сохраняем центрирование и добавляем смещение
       element.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
@@ -140,35 +209,28 @@ class ParallaxEffect {
     // Если используется гироскоп, не обрабатываем касания
     if (this.useGyro) return;
     
-    // Получаем координаты в зависимости от типа события
     let clientX, clientY;
     
     if (e.touches) {
-      // Сенсорное устройство
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
     } else {
-      // Мышь
       clientX = e.clientX;
       clientY = e.clientY;
     }
     
-    // Нормализуем координаты от -1 до 1
     const mouseX = (clientX / window.innerWidth) * 2 - 1;
     const mouseY = (clientY / window.innerHeight) * 2 - 1;
 
-    // Применяем смещение для каждого слоя
     this.layers.forEach(layer => {
       const element = document.querySelector(layer.selector);
       if (!element) return;
 
       const speed = layer.speed;
-      // Уменьшил смещение для мобильных устройств для лучшей производительности
       const maxOffset = window.innerWidth < 768 ? 15 : 30;
       const offsetX = mouseX * maxOffset * speed;
       const offsetY = mouseY * maxOffset * speed;
       
-      // Сохраняем центрирование и добавляем смещение
       element.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
     });
   }
@@ -194,9 +256,9 @@ document.head.appendChild(style);
 
 // Использование:
 const parallax = new ParallaxEffect('.parallax-container', [
-  { selector: '.layer-1', speed: 0.02 }, // Очень медленно (дальний план)
-  { selector: '.layer-2', speed: 0.09 }, // Медленно
-  { selector: '.layer-3', speed: 0.18 }, // Средне
-  { selector: '.layer-4', speed: 0.28 }, // Быстро (ближний план)
-  { selector: '.layer-5', speed: 0.48 }  // Очень быстро (ближний план)
+  { selector: '.layer-1', speed: 0.02 },
+  { selector: '.layer-2', speed: 0.09 },
+  { selector: '.layer-3', speed: 0.18 },
+  { selector: '.layer-4', speed: 0.28 },
+  { selector: '.layer-5', speed: 0.48 }
 ]);
