@@ -127,7 +127,7 @@ class ParallaxEffect {
       if (!element) return;
       
       const speed = layer.speed;
-      const maxOffset = 25; // Максимальное смещение для гироскопа
+      const maxOffset = 60; // Максимальное смещение для гироскопа
       const offsetX = normalizedX * maxOffset * speed;
       const offsetY = normalizedY * maxOffset * speed;
       
