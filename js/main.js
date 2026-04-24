@@ -40,7 +40,7 @@ class ParallaxEffect {
   
   createGyroButton() {
     const button = document.createElement('button');
-    button.textContent = '🎯 Активировать параллакс (гироскоп)';
+    button.textContent = 'Активировать параллакс (гироскоп)';
     button.style.cssText = `
       position: fixed;
       bottom: 20px;
@@ -48,7 +48,7 @@ class ParallaxEffect {
       transform: translateX(-50%);
       z-index: 10000;
       padding: 12px 24px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      
       color: white;
       border: none;
       border-radius: 50px;
@@ -127,7 +127,7 @@ class ParallaxEffect {
       if (!element) return;
       
       const speed = layer.speed;
-      const maxOffset = 105; // Максимальное смещение для гироскопа
+      const maxOffset = 250; // Максимальное смещение для гироскопа
       const offsetX = normalizedX * maxOffset * speed;
       const offsetY = normalizedY * maxOffset * speed;
       
