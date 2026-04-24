@@ -1,0 +1,171 @@
+/* Исправлено: body всегда на весь экран, без скролла */
+html {
+    height: 100%;
+    overflow: hidden;  /* Запрещаем скролл на html */
+}
+
+body {
+    height: 100%;       /* Фиксированная высота, а не min-height */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Open Sans', sans-serif;
+    overflow: hidden;   /* Запрещаем скролл на body */
+}
+.container {   
+    
+    height: 50%; 
+    width: 60%;      
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* Для позиционирования parallax */
+    /* position: relative;   */
+    overflow: hidden;    /* Обрезаем всё, что выходит за границы */
+    
+    /* Добавляем центрирование по центру экрана */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+}
+
+/* Для экранов 950px и шире */
+@media (min-width: 950px) {
+    html, body {
+        font-size: clamp(18px, 2vw, 32px);
+    }
+}
+
+/* Для экранов от 200px до 949px */
+@media (min-width: 140px) and (max-width: 949px) {
+    html, body {
+        font-size: clamp(14px, 4vw, 18px);
+    }
+    
+}
+
+
+
+.header {
+    width: 100%;
+    background-color: lightblue;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+}
+
+/* Параллакс контейнер - не влияет на размеры */
+.parallax-container {
+    position: absolute;  /* Абсолютное позиционирование */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    z-index: 0;         /* Под контентом */
+}
+
+/* Контент поверх параллакса */
+/* .container > *:not(.parallax-container) {
+    position: relative;
+    z-index: 1;
+} */
+
+.parallax-layer {
+    position: absolute;
+    top: 50%;           /* Центрируем относительно контейнера */
+    left: 50%;
+    width: 120%;        /* Больше экрана для движения */
+    height: 120%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    will-change: transform;
+    transform: translate(-50%, -50%); /* Центрируем */
+}
+
+/* Разные слои с разными картинками */
+.layer-1 {
+    background-image: url('../assets/images/Fon001.png');
+     width: 120%;        /* Больше экрана для движения */
+    height: 120%;
+    
+}
+
+.layer-2 {
+    background-image: url('../assets/images/Fon002.png');
+     width: 160%;        /* Больше экрана для движения */
+    height: 160%;
+    left: 52%;
+    top: 51%;
+    
+    
+  
+}
+
+.layer-3 {
+    background-image: url('../assets/images/Fon003.png');
+     width: 150%;        /* Больше экрана для движения */
+    height: 150%;
+    
+}
+
+.layer-4 {
+    background-image: url('../assets/images/Fon004.png');
+     width: 130%;        /* Больше экрана для движения */
+    height: 130%;
+    left: 54%;
+    
+}
+.layer-5 {
+    background-image: url('../assets/images/Fon005.png');
+    width: 110%;        /* Больше экрана для движения */
+    height: 90%;
+    
+}
+
+.glassEffct {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(80px);
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.1) 0px,
+        rgba(255, 255, 255, 0.1) 2px,
+        rgba(255, 255, 255, 0.05) 2px,
+        rgba(255, 255, 255, 0.05) 4px
+    );
+    box-sizing: border-box;
+    padding: 20px;
+    border-radius: 20px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.fontOswald {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(14px, 6vw, 32px);
+    color: aliceblue;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
