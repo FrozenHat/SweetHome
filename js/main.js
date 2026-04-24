@@ -149,7 +149,7 @@ class ParallaxEffect {
   
   animate() {
     // Плавное следование (инерция)
-    const easing = 0.08; // Коэффициент сглаживания (меньше = плавнее)
+    const easing = 0.16; // Коэффициент сглаживания (меньше = плавнее)
     
     this.currentX += (this.targetX - this.currentX) * easing;
     this.currentY += (this.targetY - this.currentY) * easing;
