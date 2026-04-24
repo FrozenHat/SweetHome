@@ -58,7 +58,7 @@ class ParallaxEffect {
       transform: translateX(-50%);
       z-index: 10000;
       padding: 12px 24px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      
       color: white;
       border: none;
       border-radius: 50px;
@@ -149,7 +149,7 @@ class ParallaxEffect {
   
   animate() {
     // Плавное следование (инерция)
-    const easing = 0.12; // Коэффициент сглаживания (меньше = плавнее)
+    const easing = 0.08; // Коэффициент сглаживания (меньше = плавнее)
     
     this.currentX += (this.targetX - this.currentX) * easing;
     this.currentY += (this.targetY - this.currentY) * easing;
